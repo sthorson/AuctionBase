@@ -1,0 +1,9 @@
+Could be helpful in keeping everyone on the same page.
+
+Log 1 : Sam
+   Database name is set to AuctionBase in sqlitedb.py
+   Finished curr_time in auctionbase.py and getTime in sqlitedb.py
+   Added home page for auction base, class index in auctionbase.py
+   Added functionality to select time. Finished class select_time in auctionbase.py. Created helper method setTime in sqlitedb.py
+   Added search page. URL /search. Class search in auctionbase.py
+   Currently implementing search function in auctionbase.py. WIP.
