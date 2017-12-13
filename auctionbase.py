@@ -108,11 +108,11 @@ class search: #TODO: IMPLEMENT SEARCH FUNCTION AND ALL QUERIES
 
 
 	def GET(self):
-		return render_template('search.html', message = 'Message_Here')
+		return render_template('search.html')
 
 	def POST(self):
 		#Get parameters from form
-		params = web.input(id='null') #If form not filled, defaults entry to null
+		params = web.input() #If form not filled, defaults entry to null
 		item_id = params['itemID']
 		user_id = params['userID']
 		min_price = params['minPrice']
@@ -123,71 +123,77 @@ class search: #TODO: IMPLEMENT SEARCH FUNCTION AND ALL QUERIES
 		#start w/ base query and add up
 		if (status == 'open'):
 
-			query_string = "select * from Items where Currently < Ends"
+			query_string = "select * from Items i, CurrentTime ct where ct.Time < i.Ends"
 
-			if (item_id != 'null'):
-				query_string += " AND itemID = '%(itemID)s' "%{'itemID':item_id}
-			if (user_id != 'null'):
-				query_string += " AND userID = '%(userID)s' "%{'userID':user_id}
-			if (min_price != 'null'):
-				query_string += " AND minPrice = '%(minPrice)s' "%{'minPrice':min_price}
-			if (max_price != 'null'):
-				query_string += " AND maxPrice = '%(maxPrice)s' "%{'maxPrice':max_price}
+			if (item_id):
+				query_string += " AND i.ItemID = '%(itemID)s' "%{'itemID':item_id}
+			if (user_id):
+				query_string += " AND s.UserID = '%(userID)s' "%{'userID':user_id}
+			if (min_price):
+				query_string += " AND i.Currently >= '%(minPrice)s' "%{'minPrice':min_price}
+			if (max_price):
+				query_string += " AND i.Currently <= '%(maxPrice)s' AND i.Buy_Price <= '%(maxPrice)s' "%{'maxPrice':max_price}
 			
 		elif (status == 'close'):
 
-			query_string = "select * from Items where Currently >= Ends"
+			query_string = "select * from Items i, CurrentTime ct where ct.Time >= i.Ends"
 
-			if (item_id != 'null'):
-				query_string += " AND itemID = '%(itemID)s' "%{'itemID':item_id}
-			if (user_id != 'null'):
-				query_string += " AND userID = '%(userID)s' "%{'userID':user_id}
-			if (min_price != 'null'):
-				query_string += " AND minPrice = '%(minPrice)s' "%{'minPrice':min_price}
-			if (max_price != 'null'):
-				query_string += " AND maxPrice = '%(maxPrice)s' "%{'maxPrice':max_price}	
+			if (item_id):
+				query_string += " AND i.ItemID = '%(itemID)s' "%{'itemID':item_id}
+			if (user_id):
+				query_string += " AND i.Seller_UserID = '%(userID)s' "%{'userID':user_id}
+			if (min_price):
+				query_string += " AND i.Currently >= '%(minPrice)s' "%{'minPrice':min_price}
+			if (max_price):
+				query_string += " AND i.Currently <= '%(maxPrice)s' AND i.Buy_Price <= '%(maxPrice)s' "%{'maxPrice':max_price}
 		
 		elif (status == 'notStarted'):
 
-			query_string = "select * from Items where Currently < Started"
+			query_string = "select * from Items i, CurrentTime ct where ct.Time < i.Started"
 
-			if (item_id != 'null'):
-				query_string += " AND itemID = '%(itemID)s' "%{'itemID':item_id}
-			if (user_id != 'null'):
-				query_string += " AND userID = '%(userID)s' "%{'userID':user_id}
-			if (min_price != 'null'):
-				query_string += " AND minPrice = '%(minPrice)s' "%{'minPrice':min_price}
-			if (max_price != 'null'):
-				query_string += " AND maxPrice = '%(maxPrice)s' "%{'maxPrice':max_price}
+			if (item_id):
+				query_string += " AND i.ItemID = '%(itemID)s' "%{'itemID':item_id}
+			if (user_id):
+				query_string += " AND i.Seller_UserID = '%(userID)s' "%{'userID':user_id}
+			if (min_price):
+				query_string += " AND i.Currently >= '%(minPrice)s' "%{'minPrice':min_price}
+			if (max_price):
+				query_string += " AND i.Currently <= '%(maxPrice)s' AND i.Buy_Price <= '%(maxPrice)s' "%{'maxPrice':max_price}
 
 		else: #status == all
 
-			query_string = "select * from Items where"
+			query_string = "select * from Items i"
 
-			if (item_id != 'null'):
-				query_string += " AND itemID = '%(itemID)s' "%{'itemID':item_id}
-			if (user_id != 'null'):
-				query_string += " AND userID = '%(userID)s' "%{'userID':user_id}
-			if (min_price != 'null'):
-				query_string += " AND minPrice = '%(minPrice)s' "%{'minPrice':min_price}
-			if (max_price != 'null'):
-				query_string += " AND maxPrice = '%(maxPrice)s' "%{'maxPrice':max_price}
+			if ((not item_id) or (not user_id) or (not min_price) or (not max_price)):
+				query_string += " where i.Buy_Price > 0"
+
+			if (item_id):
+				query_string += " AND i.ItemID = '%(itemID)s' "%{'itemID':item_id}
+			if (user_id):
+				query_string += " AND i.Seller_UserID = '%(userID)s' "%{'userID':user_id}
+			if (min_price):
+				query_string += " AND i.Currently >= '%(minPrice)s' "%{'minPrice':min_price}
+			if (max_price):
+				query_string += " AND i.Currently <= '%(maxPrice)s' AND i.Buy_Price <= '%(maxPrice)s' "%{'maxPrice':max_price}
 
 		#END OF LOGIC BLOCK
-		
+		print str(query_string) #for debug
 		#Run the query
 		t = sqlitedb.transaction()
 		try:
-			sqlitedb.query(query_string)
+			results = sqlitedb.query(query_string)
 		except Exception as e:
 			t.rollback()
 			print str(e)
+			return render_template('search.html', message = "A problem occurred.", key = results)	
 		else:
 			t.commit()
+			return render_template('search.html', key = results)
 
+			
 
 # Templates / notes
-#
+# return render_template('select_time.html', message = update_message)
 # where="Time = '%(oldTime)s'"%{"oldTime":old_time}
 # t = sqlitedb.transaction()
 # try:
